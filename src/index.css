@@ -89,4 +89,83 @@ All colors MUST be HSL.
   .cyan-glow {
     text-shadow: var(--glow-cyan);
   }
+
+  .aurora-layer {
+    @apply absolute inset-0;
+    animation: aurora-shift linear infinite;
+    mix-blend-mode: screen;
+  }
+
+  .aura-bg {
+    background: radial-gradient(circle at 20% 20%, hsla(var(--cyan), 0.25), transparent 60%),
+      radial-gradient(circle at 80% 10%, hsla(var(--gold), 0.2), transparent 55%);
+    filter: blur(120px);
+    opacity: 0.7;
+  }
+
+  .feature-card {
+    @apply relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[hsl(215,35%,12%)] via-[hsl(215,30%,16%)] to-[hsl(215,25%,8%)] p-8 transition-all duration-500;
+    box-shadow: 0 10px 40px hsla(215, 65%, 5%, 0.35);
+  }
+
+  .feature-card::after {
+    content: "";
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
+    background: radial-gradient(circle at 20% 20%, hsla(var(--cyan), 0.25), transparent 55%);
+  }
+
+  .feature-card:hover {
+    transform: translateY(-6px) scale(1.01);
+  }
+
+  .feature-card:hover::after {
+    @apply opacity-100;
+  }
+
+  .impact-card {
+    @apply feature-card;
+    animation: float-pulse 6s ease-in-out infinite;
+  }
+
+  .benefit-pill {
+    @apply relative overflow-hidden rounded-full border border-cyan/40 bg-[hsla(190,85%,20%,0.35)] px-6 py-3 text-sm uppercase tracking-wider text-cyan/90 transition-all;
+  }
+
+  .benefit-pill::after {
+    content: "";
+    @apply absolute inset-0;
+    background: linear-gradient(120deg, transparent, hsla(var(--gold), 0.35), transparent);
+    animation: shimmer 2.8s linear infinite;
+  }
+}
+
+@keyframes aurora-shift {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10%) scale(1.1);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes float-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
