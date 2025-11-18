@@ -55,11 +55,18 @@ export const Header = () => {
                 </Button>
               </>
             ) : (
-              <Link to="/login">
-                <Button className="bg-gradient-to-r from-gold to-gold-light text-primary-foreground hover:opacity-90">
-                  Login
-                </Button>
-              </Link>
+              <>
+                <Link to="/login">
+                  <Button className="bg-gradient-to-r from-gold to-gold-light text-primary-foreground hover:opacity-90">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/admin/login">
+                  <Button variant="ghost" className="text-foreground/70 hover:text-cyan">
+                    Admin
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
 
@@ -102,9 +109,14 @@ export const Header = () => {
                 </Button>
               </>
             ) : (
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full bg-gradient-to-r from-gold to-gold-light">Login</Button>
-              </Link>
+              <>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="w-full bg-gradient-to-r from-gold to-gold-light">Login</Button>
+                </Link>
+                <Link to="/admin/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="w-full text-cyan">Admin</Button>
+                </Link>
+              </>
             )}
           </div>
         )}
