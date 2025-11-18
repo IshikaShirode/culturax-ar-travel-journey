@@ -5,9 +5,20 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Medal, Award } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
+
+type QuizAttempt = Pick<Tables<'quiz_attempts'>, 'user_id' | 'score'> & {
+  profiles?: { username: string | null } | null;
+};
+
+type LeaderboardEntry = {
+  username: string;
+  totalScore: number;
+  attempts: number;
+};
 
 export default function Leaderboard() {
-  const { data: allTime, isLoading } = useQuery({
+  const { data: allTime, isLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ['leaderboard', 'all-time'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -19,22 +30,29 @@ export default function Leaderboard() {
       if (error) throw error;
 
       // Group by user and calculate total score
-      const userScores = data.reduce((acc: Record<string, any>, attempt) => {
-        const userId = attempt.user_id;
-        if (!acc[userId]) {
-          acc[userId] = {
-            username: attempt.profiles?.username || 'Unknown',
-            totalScore: 0,
-            attempts: 0,
-          };
-        }
-        acc[userId].totalScore += attempt.score;
-        acc[userId].attempts += 1;
-        return acc;
-      }, {});
+      const userScores = (data as QuizAttempt[] | null)?.reduce<Record<string, LeaderboardEntry>>(
+        (acc, attempt) => {
+          if (!attempt.user_id) {
+            return acc;
+          }
+
+          if (!acc[attempt.user_id]) {
+            acc[attempt.user_id] = {
+              username: attempt.profiles?.username || 'Unknown Explorer',
+              totalScore: 0,
+              attempts: 0,
+            };
+          }
+
+          acc[attempt.user_id].totalScore += attempt.score ?? 0;
+          acc[attempt.user_id].attempts += 1;
+          return acc;
+        },
+        {},
+      ) ?? {};
 
       return Object.values(userScores)
-        .sort((a: any, b: any) => b.totalScore - a.totalScore)
+        .sort((a, b) => b.totalScore - a.totalScore)
         .slice(0, 50);
     },
   });
@@ -88,7 +106,7 @@ export default function Leaderboard() {
                 </div>
               ) : (
                 <>
-                  {allTime?.map((entry: any, index: number) => (
+                  {allTime?.map((entry, index) => (
                     <div
                       key={index}
                       className={`glass-hover p-6 rounded-xl flex items-center gap-6 animate-fade-in border-2 ${getRankBg(index + 1)}`}

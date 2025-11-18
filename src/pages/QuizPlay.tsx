@@ -9,6 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { FogLayer } from '@/components/effects/FogLayer';
 import { HoloParticles } from '@/components/effects/HoloParticles';
 import { Clock, CheckCircle2 } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Quiz = Tables<'quizzes'>;
+type Question = Tables<'questions'>;
 
 export default function QuizPlay() {
   const { id } = useParams();
@@ -21,9 +25,16 @@ export default function QuizPlay() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [startTime] = useState(Date.now());
 
-  const { data: quiz } = useQuery({
+  const {
+    data: quiz,
+    isLoading: quizLoading,
+    error: quizError,
+  } = useQuery<Quiz>({
     queryKey: ['quiz', id],
     queryFn: async () => {
+      if (!id) {
+        throw new Error('Missing quiz identifier.');
+      }
       const { data, error } = await supabase
         .from('quizzes')
         .select('*')
@@ -32,24 +43,41 @@ export default function QuizPlay() {
       if (error) throw error;
       return data;
     },
+    enabled: Boolean(id),
   });
 
-  const { data: questions } = useQuery({
+  const {
+    data: questions,
+    isLoading: questionsLoading,
+    error: questionsError,
+  } = useQuery<Question[]>({
     queryKey: ['questions', id],
     queryFn: async () => {
+      if (!id) {
+        throw new Error('Missing quiz identifier.');
+      }
       const { data, error } = await supabase
         .from('questions')
         .select('*')
         .eq('quiz_id', id)
         .order('order_index', { ascending: true });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    enabled: Boolean(id),
   });
 
   useEffect(() => {
-    if (quiz) {
+    if (questions?.length) {
+      setCurrentQuestion((prev) => Math.min(prev, questions.length - 1));
+    }
+  }, [questions]);
+
+  useEffect(() => {
+    if (quiz && typeof quiz.time_limit === 'number') {
       setTimeLeft(quiz.time_limit);
+    } else {
+      setTimeLeft(0);
     }
   }, [quiz]);
 
@@ -71,16 +99,17 @@ export default function QuizPlay() {
 
   const submitAttempt = useMutation({
     mutationFn: async (score: number) => {
+      if (!questions?.length) return;
       const timeTaken = Math.floor((Date.now() - startTime) / 1000);
       const correctAnswers = Object.entries(selectedAnswers).filter(
-        ([idx, answer]) => questions?.[parseInt(idx)]?.correct_answer === answer
+        ([idx, answer]) => questions?.[parseInt(idx, 10)]?.correct_answer === answer
       ).length;
 
       const { error } = await supabase.from('quiz_attempts').insert({
         user_id: user?.id,
         quiz_id: id,
         score,
-        total_questions: questions?.length || 0,
+        total_questions: questions.length,
         correct_answers: correctAnswers,
         time_taken: timeTaken,
       });
@@ -94,11 +123,20 @@ export default function QuizPlay() {
       });
       navigate('/profile');
     },
+    onError: (error) => {
+      const description = error instanceof Error ? error.message : 'Please try again.';
+      toast({
+        title: 'Submission failed',
+        description,
+        variant: 'destructive',
+      });
+    },
   });
 
   const handleSubmit = () => {
+    if (!questions?.length || submitAttempt.isPending) return;
     const correctAnswers = Object.entries(selectedAnswers).filter(
-      ([idx, answer]) => questions?.[parseInt(idx)]?.correct_answer === answer
+      ([idx, answer]) => questions?.[parseInt(idx, 10)]?.correct_answer === answer
     ).length;
     
     const totalPoints = questions?.reduce((sum, q) => sum + (q.points || 10), 0) || 0;
@@ -107,12 +145,47 @@ export default function QuizPlay() {
     submitAttempt.mutate(score);
   };
 
-  if (!quiz || !questions) {
+  if (!id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+        <p className="text-lg text-foreground/80">Invalid quiz link. Please return to the quiz list.</p>
+      </div>
+    );
+  }
+
+  if (quizLoading || questionsLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (quizError || questionsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+        <p className="text-lg text-foreground/80">
+          {quizError instanceof Error
+            ? quizError.message
+            : questionsError instanceof Error
+              ? questionsError.message
+              : 'Unable to load quiz data right now.'}
+        </p>
+      </div>
+    );
+  }
+
+  if (!quiz) {
+    return <div className="min-h-screen flex items-center justify-center">Quiz not found.</div>;
+  }
+
+  if (!questions?.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+        <p className="text-lg text-foreground/80">This quiz does not have any questions yet. Please try another quiz.</p>
+      </div>
+    );
   }
 
   const currentQ = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const isLastQuestion = currentQuestion === questions.length - 1;
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -153,7 +226,12 @@ export default function QuizPlay() {
                 return (
                   <button
                     key={option}
-                    onClick={() => setSelectedAnswers({ ...selectedAnswers, [currentQuestion]: option })}
+                    onClick={() =>
+                      setSelectedAnswers((prev) => ({
+                        ...prev,
+                        [currentQuestion]: option,
+                      }))
+                    }
                     className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
                       isSelected
                         ? 'border-gold bg-gold/10'
@@ -184,7 +262,7 @@ export default function QuizPlay() {
               Previous
             </Button>
 
-            {currentQuestion === questions.length - 1 ? (
+            {isLastQuestion ? (
               <Button
                 onClick={handleSubmit}
                 disabled={submitAttempt.isPending}

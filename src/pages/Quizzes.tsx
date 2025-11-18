@@ -6,9 +6,12 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Clock, Target, Trophy } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Quiz = Tables<'quizzes'>;
 
 export default function Quizzes() {
-  const { data: quizzes, isLoading } = useQuery({
+  const { data: quizzes, isLoading } = useQuery<Quiz[]>({
     queryKey: ['quizzes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -18,7 +21,7 @@ export default function Quizzes() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
@@ -26,6 +29,17 @@ export default function Quizzes() {
     easy: 'text-green-400 border-green-400',
     medium: 'text-yellow-400 border-yellow-400',
     hard: 'text-red-400 border-red-400',
+  };
+
+  const getDifficultyStyle = (difficulty?: Quiz['difficulty']) => {
+    const key = difficulty?.toLowerCase() as keyof typeof difficultyColors | undefined;
+    return key ? difficultyColors[key] : 'text-foreground/60 border-border/60';
+  };
+
+  const formatTimeLimit = (timeLimit?: Quiz['time_limit']) => {
+    if (!timeLimit || timeLimit <= 0) return 'No limit';
+    const minutes = Math.max(1, Math.round(timeLimit / 60));
+    return `${minutes} min`;
   };
 
   return (
@@ -63,23 +77,23 @@ export default function Quizzes() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <h3 className="text-2xl font-bold gold-text">{quiz.title}</h3>
-                    <span className={`px-3 py-1 rounded-full border text-sm ${difficultyColors[quiz.difficulty as keyof typeof difficultyColors]}`}>
-                      {quiz.difficulty}
+                    <span className={`px-3 py-1 rounded-full border text-sm ${getDifficultyStyle(quiz.difficulty)}`}>
+                      {quiz.difficulty ?? 'Mixed'}
                     </span>
                   </div>
                   
                   <p className="text-foreground/70 mb-6 line-clamp-2">
-                    {quiz.description}
+                    {quiz.description ?? 'Discover India’s heritage through immersive cultural challenges.'}
                   </p>
 
                   <div className="flex items-center gap-4 text-sm text-foreground/60 mb-6">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      <span>{Math.floor(quiz.time_limit / 60)} min</span>
+                      <span>{formatTimeLimit(quiz.time_limit)}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Target className="w-4 h-4" />
-                      <span>{quiz.category}</span>
+                      <span>{quiz.category ?? 'General knowledge'}</span>
                     </div>
                   </div>
 

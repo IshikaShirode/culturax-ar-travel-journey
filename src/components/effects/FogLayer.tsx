@@ -16,6 +16,7 @@ export const FogLayer = ({ layer = 1 }: FogLayerProps) => {
     let currentX = 0;
     let currentY = 0;
     let scrollY = 0;
+    let animationFrameId: number;
 
     const strength = layer === 1 ? 20 : 40;
 
@@ -38,7 +39,7 @@ export const FogLayer = ({ layer = 1 }: FogLayerProps) => {
       const moveY = currentY * strength + scrollY * 0.1;
 
       fog.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.1)`;
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -48,6 +49,9 @@ export const FogLayer = ({ layer = 1 }: FogLayerProps) => {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
   }, [layer]);
 
