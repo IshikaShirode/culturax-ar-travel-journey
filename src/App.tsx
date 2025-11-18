@@ -13,6 +13,8 @@ import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import Feedback from "./pages/Feedback";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
+import { AdminRoute } from "./components/layout/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,14 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/feedback" element={<Feedback />} />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

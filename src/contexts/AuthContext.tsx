@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, username: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -18,6 +19,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,13 +71,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      setRoleLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchRole = async () => {
+      setRoleLoading(true);
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (isMounted) {
+        setIsAdmin(!error && data?.role === 'admin');
+        setRoleLoading(false);
+      }
+    };
+
+    fetchRole();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
+    setIsAdmin(false);
     navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading: loading || roleLoading,
+        isAdmin,
+        signIn,
+        signUp,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

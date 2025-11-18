@@ -5,7 +5,7 @@ import { Menu } from 'lucide-react';
 import { useState } from 'react';
 
 export const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -43,6 +43,13 @@ export const Header = () => {
                     Profile
                   </Button>
                 </Link>
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="ghost" className="text-foreground/80 hover:text-cyan">
+                      Admin
+                    </Button>
+                  </Link>
+                )}
                 <Button onClick={signOut} variant="outline" className="border-gold text-gold hover:bg-gold hover:text-primary-foreground">
                   Logout
                 </Button>
@@ -85,6 +92,11 @@ export const Header = () => {
                 <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" className="w-full">Profile</Button>
                 </Link>
+                {isAdmin && (
+                  <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full">Admin</Button>
+                  </Link>
+                )}
                 <Button onClick={signOut} variant="outline" className="w-full">
                   Logout
                 </Button>

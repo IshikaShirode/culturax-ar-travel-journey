@@ -233,6 +233,56 @@ export type Database = {
         }
         Relationships: []
       }
+      monuments: {
+        Row: {
+          ar_marker_url: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          era: string | null
+          id: string
+          location: string | null
+          name: string
+          significance: string | null
+          status: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          ar_marker_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          era?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          significance?: string | null
+          status?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          ar_marker_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          era?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          significance?: string | null
+          status?: string | null
+          tags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monuments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
