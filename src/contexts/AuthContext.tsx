@@ -8,7 +8,11 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (
+    email: string,
+    password: string,
+    options?: { redirectTo?: string | null },
+  ) => Promise<{ error: Error | null; user: User | null }>;
   signUp: (email: string, password: string, username: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -41,14 +45,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, options?: { redirectTo?: string | null }) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate('/');
-      return { error: null };
+      if (options?.redirectTo !== null) {
+        navigate(options?.redirectTo ?? '/');
+      }
+      return { error: null, user: data.user };
     } catch (error) {
-      return { error: error as Error };
+      return { error: error as Error, user: null };
     }
   };
 

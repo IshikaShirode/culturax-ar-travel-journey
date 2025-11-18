@@ -8,7 +8,7 @@ import { Trophy, Medal, Award } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type QuizAttempt = Pick<Tables<'quiz_attempts'>, 'user_id' | 'score'> & {
-  profiles?: { username: string | null } | null;
+  profiles?: { username: string | null; full_name: string | null } | null;
 };
 
 type LeaderboardEntry = {
@@ -23,7 +23,7 @@ export default function Leaderboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quiz_attempts')
-        .select('user_id, score, profiles(username)')
+        .select('user_id, score, profiles(username, full_name)')
         .order('score', { ascending: false })
         .limit(50);
       
@@ -37,8 +37,12 @@ export default function Leaderboard() {
           }
 
           if (!acc[attempt.user_id]) {
+            const displayName =
+              attempt.profiles?.full_name?.trim() ||
+              attempt.profiles?.username ||
+              'Unknown Explorer';
             acc[attempt.user_id] = {
-              username: attempt.profiles?.username || 'Unknown Explorer',
+              username: displayName,
               totalScore: 0,
               attempts: 0,
             };
@@ -121,6 +125,9 @@ export default function Leaderboard() {
                           </h3>
                           <p className="text-sm text-foreground/60">
                             {entry.attempts} quiz{entry.attempts !== 1 ? 'zes' : ''} completed
+                          </p>
+                          <p className="text-xs text-foreground/50 uppercase tracking-widest">
+                            Rank #{index + 1}
                           </p>
                         </div>
                       </div>

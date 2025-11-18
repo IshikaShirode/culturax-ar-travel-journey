@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Who commissioned the Taj Mahal?",
+    "options": {
+      "A": "Akbar",
+      "B": "Shah Jahan",
+      "C": "Aurangzeb",
+      "D": "Humayun"
+    },
+    "answer": "B",
+    "category": "Architecture",
+    "points": 10
+  },
+  {
+    "question": "Ellora caves are famous for which blend of faiths?",
+    "options": {
+      "A": "Hindu, Buddhist, Jain",
+      "B": "Christian & Islamic",
+      "C": "Sikh & Buddhist",
+      "D": "Hindu & Christian"
+    },
+    "answer": "A",
+    "category": "Heritage",
+    "points": 10
+  }
+]
+
